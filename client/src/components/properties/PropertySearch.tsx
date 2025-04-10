@@ -65,17 +65,17 @@ const PropertySearch: React.FC<PropertySearchProps> = ({ className }) => {
     const params = new URLSearchParams();
     
     if (searchParams.location) params.append("location", searchParams.location);
-    if (searchParams.propertyType) params.append("propertyType", searchParams.propertyType);
+    if (searchParams.propertyType && searchParams.propertyType !== "any") params.append("propertyType", searchParams.propertyType);
     
-    if (searchParams.priceRange) {
+    if (searchParams.priceRange && searchParams.priceRange !== "any") {
       const [min, max] = searchParams.priceRange.split("-");
       if (min) params.append("priceMin", min);
       if (max) params.append("priceMax", max);
     }
     
-    if (searchParams.bedrooms) params.append("bedrooms", searchParams.bedrooms);
-    if (searchParams.bathrooms) params.append("bathrooms", searchParams.bathrooms);
-    if (searchParams.status) params.append("status", searchParams.status);
+    if (searchParams.bedrooms && searchParams.bedrooms !== "any") params.append("bedrooms", searchParams.bedrooms);
+    if (searchParams.bathrooms && searchParams.bathrooms !== "any") params.append("bathrooms", searchParams.bathrooms);
+    if (searchParams.status && searchParams.status !== "any") params.append("status", searchParams.status);
     
     // Navigate to properties page with filters
     setLocation(`/properties?${params.toString()}`);
@@ -108,7 +108,7 @@ const PropertySearch: React.FC<PropertySearchProps> = ({ className }) => {
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any Type</SelectItem>
+                <SelectItem value="any">Any Type</SelectItem>
                 <SelectItem value="house">House</SelectItem>
                 <SelectItem value="apartment">Apartment</SelectItem>
                 <SelectItem value="condo">Condo</SelectItem>
@@ -127,7 +127,7 @@ const PropertySearch: React.FC<PropertySearchProps> = ({ className }) => {
                 <SelectValue placeholder="Select price range" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any Price</SelectItem>
+                <SelectItem value="any">Any Price</SelectItem>
                 <SelectItem value="0-200000">$0 - $200k</SelectItem>
                 <SelectItem value="200000-300000">$200k - $300k</SelectItem>
                 <SelectItem value="300000-500000">$300k - $500k</SelectItem>
@@ -157,7 +157,7 @@ const PropertySearch: React.FC<PropertySearchProps> = ({ className }) => {
                   <SelectValue placeholder="Any bedrooms" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Any</SelectItem>
+                  <SelectItem value="any">Any</SelectItem>
                   <SelectItem value="1">1+</SelectItem>
                   <SelectItem value="2">2+</SelectItem>
                   <SelectItem value="3">3+</SelectItem>
@@ -177,7 +177,7 @@ const PropertySearch: React.FC<PropertySearchProps> = ({ className }) => {
                   <SelectValue placeholder="Any bathrooms" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Any</SelectItem>
+                  <SelectItem value="any">Any</SelectItem>
                   <SelectItem value="1">1+</SelectItem>
                   <SelectItem value="2">2+</SelectItem>
                   <SelectItem value="3">3+</SelectItem>
@@ -196,7 +196,7 @@ const PropertySearch: React.FC<PropertySearchProps> = ({ className }) => {
                   <SelectValue placeholder="Any status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Any</SelectItem>
+                  <SelectItem value="any">Any</SelectItem>
                   <SelectItem value="for_sale">For Sale</SelectItem>
                   <SelectItem value="for_rent">For Rent</SelectItem>
                 </SelectContent>

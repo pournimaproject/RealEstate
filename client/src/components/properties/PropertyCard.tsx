@@ -141,14 +141,12 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
       <div className="relative">
-        <Link href={`/properties/${property.id}`}>
-          <a>
-            <img 
-              src={getImageUrl(property)} 
-              alt={property.title} 
-              className="w-full h-60 object-cover"
-            />
-          </a>
+        <Link href={`/properties/${property.id}`} className="block">
+          <img 
+            src={getImageUrl(property)} 
+            alt={property.title} 
+            className="w-full h-60 object-cover"
+          />
         </Link>
         <Badge className={`absolute top-4 left-4 ${getStatusColor(property.status)} text-sm font-medium px-2 py-1 rounded`}>
           {getStatusLabel(property.status)}
