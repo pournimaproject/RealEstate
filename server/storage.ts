@@ -4,9 +4,11 @@ import { users, properties, inquiries, favorites,
          type Inquiry, type InsertInquiry,
          type Favorite, type InsertFavorite } from "@shared/schema";
 import session from "express-session";
-import createMemoryStore from "memorystore";
+import connectPg from "connect-pg-simple";
+import { db, pool } from "./db";
+import { eq, and, gte, lte, desc, like, sql } from "drizzle-orm";
 
-const MemoryStore = createMemoryStore(session);
+const PostgresStore = connectPg(session);
 
 // modify the interface with CRUD methods
 export interface IStorage {
@@ -58,249 +60,228 @@ export type PropertyFilters = {
   status?: string;
 };
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private properties: Map<number, Property>;
-  private inquiries: Map<number, Inquiry>;
-  private favorites: Map<number, Favorite>;
-  sessionStore: session.SessionStore;
-  currentUserId: number;
-  currentPropertyId: number;
-  currentInquiryId: number;
-  currentFavoriteId: number;
+export class DatabaseStorage implements IStorage {
+  sessionStore: any;
 
   constructor() {
-    this.users = new Map();
-    this.properties = new Map();
-    this.inquiries = new Map();
-    this.favorites = new Map();
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000 // 24 hours
-    });
-    this.currentUserId = 1;
-    this.currentPropertyId = 1;
-    this.currentInquiryId = 1;
-    this.currentFavoriteId = 1;
-    
-    // Add sample admin user
-    this.createUser({
-      username: "admin",
-      password: "$2b$10$NrM4SuLCJ1D6QS0XdoGFT.TW4KYI0QBU39qJNaNPGWAFko6.WMvnS", // hashed "admin123"
-      email: "admin@homeverse.com",
-      firstName: "Admin",
-      lastName: "User",
-      role: "admin"
+    this.sessionStore = new PostgresStore({ 
+      pool, 
+      createTableIfMissing: true 
     });
   }
 
   // User methods
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.email === email,
-    );
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const createdAt = new Date();
-    const user: User = { ...insertUser, id, createdAt };
-    this.users.set(id, user);
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
 
   async updateUser(id: number, updateData: Partial<User>): Promise<User | undefined> {
-    const user = this.users.get(id);
-    if (!user) return undefined;
-    
-    const updatedUser = { ...user, ...updateData };
-    this.users.set(id, updatedUser);
+    const [updatedUser] = await db
+      .update(users)
+      .set(updateData)
+      .where(eq(users.id, id))
+      .returning();
     return updatedUser;
   }
 
   async deleteUser(id: number): Promise<boolean> {
-    return this.users.delete(id);
+    const result = await db.delete(users).where(eq(users.id, id));
+    return !!result;
   }
 
   async getAllUsers(): Promise<User[]> {
-    return Array.from(this.users.values());
+    return await db.select().from(users);
   }
 
   // Property methods
   async getProperty(id: number): Promise<Property | undefined> {
-    return this.properties.get(id);
+    const [property] = await db.select().from(properties).where(eq(properties.id, id));
+    return property;
   }
 
   async createProperty(insertProperty: InsertProperty): Promise<Property> {
-    const id = this.currentPropertyId++;
-    const createdAt = new Date();
-    const updatedAt = new Date();
-    const property: Property = { ...insertProperty, id, createdAt, updatedAt };
-    this.properties.set(id, property);
+    const now = new Date();
+    const [property] = await db
+      .insert(properties)
+      .values({
+        ...insertProperty,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning();
     return property;
   }
 
   async updateProperty(id: number, updateData: Partial<Property>): Promise<Property | undefined> {
-    const property = this.properties.get(id);
-    if (!property) return undefined;
-    
-    const updatedProperty = { 
-      ...property, 
-      ...updateData,
-      updatedAt: new Date()
-    };
-    this.properties.set(id, updatedProperty);
+    const [updatedProperty] = await db
+      .update(properties)
+      .set({
+        ...updateData,
+        updatedAt: new Date(),
+      })
+      .where(eq(properties.id, id))
+      .returning();
     return updatedProperty;
   }
 
   async deleteProperty(id: number): Promise<boolean> {
-    return this.properties.delete(id);
+    const result = await db.delete(properties).where(eq(properties.id, id));
+    return !!result;
   }
 
   async getAllProperties(filters?: PropertyFilters): Promise<Property[]> {
-    let properties = Array.from(this.properties.values());
+    let query = db.select().from(properties);
     
     if (filters) {
+      const conditions = [];
+      
       if (filters.location) {
-        properties = properties.filter(property => 
-          property.city.toLowerCase().includes(filters.location!.toLowerCase()) || 
-          property.state.toLowerCase().includes(filters.location!.toLowerCase())
+        conditions.push(
+          sql`(LOWER(${properties.city}) LIKE ${`%${filters.location.toLowerCase()}%`} OR LOWER(${properties.state}) LIKE ${`%${filters.location.toLowerCase()}%`})`
         );
       }
       
       if (filters.propertyType) {
-        properties = properties.filter(property => 
-          property.propertyType === filters.propertyType
-        );
+        conditions.push(eq(properties.propertyType, filters.propertyType));
       }
       
       if (filters.priceMin !== undefined) {
-        properties = properties.filter(property => 
-          property.price >= filters.priceMin!
-        );
+        conditions.push(gte(properties.price, filters.priceMin));
       }
       
       if (filters.priceMax !== undefined) {
-        properties = properties.filter(property => 
-          property.price <= filters.priceMax!
-        );
+        conditions.push(lte(properties.price, filters.priceMax));
       }
       
       if (filters.bedrooms !== undefined) {
-        properties = properties.filter(property => 
-          property.bedrooms >= filters.bedrooms!
-        );
+        conditions.push(gte(properties.bedrooms, filters.bedrooms));
       }
       
       if (filters.bathrooms !== undefined) {
-        properties = properties.filter(property => 
-          property.bathrooms >= filters.bathrooms!
-        );
+        conditions.push(gte(properties.bathrooms, filters.bathrooms));
       }
       
       if (filters.areaMin !== undefined) {
-        properties = properties.filter(property => 
-          property.area >= filters.areaMin!
-        );
+        conditions.push(gte(properties.area, filters.areaMin));
       }
       
       if (filters.areaMax !== undefined) {
-        properties = properties.filter(property => 
-          property.area <= filters.areaMax!
-        );
+        conditions.push(lte(properties.area, filters.areaMax));
       }
       
       if (filters.status) {
-        properties = properties.filter(property => 
-          property.status === filters.status
-        );
+        conditions.push(eq(properties.status, filters.status));
+      }
+      
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
       }
     }
     
-    return properties;
+    return await query;
   }
 
   async getPropertiesByUser(userId: number): Promise<Property[]> {
-    return Array.from(this.properties.values()).filter(
-      property => property.userId === userId
-    );
+    return await db
+      .select()
+      .from(properties)
+      .where(eq(properties.userId, userId));
   }
 
   async getFeaturedProperties(limit: number = 6): Promise<Property[]> {
-    return Array.from(this.properties.values())
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .slice(0, limit);
+    return await db
+      .select()
+      .from(properties)
+      .orderBy(desc(properties.createdAt))
+      .limit(limit);
   }
 
   // Inquiry methods
   async getInquiry(id: number): Promise<Inquiry | undefined> {
-    return this.inquiries.get(id);
+    const [inquiry] = await db.select().from(inquiries).where(eq(inquiries.id, id));
+    return inquiry;
   }
 
   async createInquiry(insertInquiry: InsertInquiry): Promise<Inquiry> {
-    const id = this.currentInquiryId++;
-    const createdAt = new Date();
-    const inquiry: Inquiry = { ...insertInquiry, id, createdAt, status: "pending" };
-    this.inquiries.set(id, inquiry);
+    const [inquiry] = await db
+      .insert(inquiries)
+      .values({
+        ...insertInquiry,
+        status: "pending",
+      })
+      .returning();
     return inquiry;
   }
 
   async updateInquiry(id: number, updateData: Partial<Inquiry>): Promise<Inquiry | undefined> {
-    const inquiry = this.inquiries.get(id);
-    if (!inquiry) return undefined;
-    
-    const updatedInquiry = { ...inquiry, ...updateData };
-    this.inquiries.set(id, updatedInquiry);
+    const [updatedInquiry] = await db
+      .update(inquiries)
+      .set(updateData)
+      .where(eq(inquiries.id, id))
+      .returning();
     return updatedInquiry;
   }
 
   async deleteInquiry(id: number): Promise<boolean> {
-    return this.inquiries.delete(id);
+    const result = await db.delete(inquiries).where(eq(inquiries.id, id));
+    return !!result;
   }
 
   async getInquiriesByProperty(propertyId: number): Promise<Inquiry[]> {
-    return Array.from(this.inquiries.values()).filter(
-      inquiry => inquiry.propertyId === propertyId
-    );
+    return await db
+      .select()
+      .from(inquiries)
+      .where(eq(inquiries.propertyId, propertyId));
   }
 
   async getInquiriesByUser(userId: number): Promise<Inquiry[]> {
-    return Array.from(this.inquiries.values()).filter(
-      inquiry => inquiry.userId === userId
-    );
+    return await db
+      .select()
+      .from(inquiries)
+      .where(eq(inquiries.userId, userId));
   }
 
   // Favorite methods
   async getFavorite(id: number): Promise<Favorite | undefined> {
-    return this.favorites.get(id);
+    const [favorite] = await db.select().from(favorites).where(eq(favorites.id, id));
+    return favorite;
   }
 
   async createFavorite(insertFavorite: InsertFavorite): Promise<Favorite> {
-    const id = this.currentFavoriteId++;
-    const createdAt = new Date();
-    const favorite: Favorite = { ...insertFavorite, id, createdAt };
-    this.favorites.set(id, favorite);
+    const [favorite] = await db
+      .insert(favorites)
+      .values(insertFavorite)
+      .returning();
     return favorite;
   }
 
   async deleteFavorite(id: number): Promise<boolean> {
-    return this.favorites.delete(id);
+    const result = await db.delete(favorites).where(eq(favorites.id, id));
+    return !!result;
   }
 
   async getFavoritesByUser(userId: number): Promise<Favorite[]> {
-    return Array.from(this.favorites.values()).filter(
-      favorite => favorite.userId === userId
-    );
+    return await db
+      .select()
+      .from(favorites)
+      .where(eq(favorites.userId, userId));
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
