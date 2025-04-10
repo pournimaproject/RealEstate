@@ -1,0 +1,99 @@
+ Replit Prompt for Real Estate Listing Website Generation
+Project Title: Real Estate Listing Platform (HomeVerse Clone)
+
+🔧 Important Development Instructions:
+You are tasked with generating a Real Estate Listing Platform with the following strict requirements:
+
+🔷 1. Tech Stack Instructions:
+✅ Use ONLY the MERN Stack:
+
+MongoDB
+
+Express.js
+
+React.js
+
+Node.js
+
+⚠️ This is mandatory as the final project needs to be deployed on Render, which supports only the MERN stack.
+
+🔷 2. Project Folder Structure:
+The folder structure must be strictly as follows:
+
+pgsql
+Copy
+Edit
+RealEstate-Platform/
+│
+├── BACKEND/
+│   ├── controllers/
+│   ├── models/
+│   ├── routes/
+│   ├── config/
+│   ├── .env         <-- Include environment variables here
+│   └── server.js
+│
+├── FRONTEND/
+│   ├── public/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   └── App.js
+│   └── package.json
+│
+├── ADMIN/
+│   ├── public/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   └── App.js
+│   └── package.json
+❌ Do not include any folders other than BACKEND, FRONTEND, and ADMIN.
+
+🔷 3. Language & Libraries Instructions:
+On FRONTEND and ADMIN, use:
+
+React.js
+
+HTML/CSS/JavaScript for UI (No frameworks like Angular/Vue)
+
+React Router for page navigation
+
+Axios for API communication
+
+On BACKEND, use:
+
+Express.js
+
+MongoDB with Mongoose
+
+Environment variables should be stored in .env
+
+Use CORS and body-parser middleware
+
+🔷 4. Core Features to Implement:
+✅ User Roles: Buyers, Sellers, Admins/Agents
+
+✅ Property Listings with Image Uploads
+
+✅ Search & Filter Properties (location, price, type)
+
+✅ Contact Form for Property Inquiries
+
+✅ Responsive UI for all devices
+
+✅ Separate Admin Panel (in ADMIN/) for managing listings and users
+
+🔷 5. Deployment Readiness:
+Code must be clean and modular to support deployment on Render.com
+
+Include MongoDB Atlas connection string in .env (example)
+
+All routes should be tested and functional
+
+📦 Final Notes:
+Do not use additional folders outside the specified structure.
+
+Keep codebase simple, scalable, and clean.
+
+Make sure the site is fully deployable and includes all core real estate feature
