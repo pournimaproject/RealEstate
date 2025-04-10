@@ -45,7 +45,7 @@ export interface IStorage {
   getFavoritesByUser(userId: number): Promise<Favorite[]>;
   
   // Session store
-  sessionStore: session.SessionStore;
+  sessionStore: any;
 }
 
 export type PropertyFilters = {
@@ -146,7 +146,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllProperties(filters?: PropertyFilters): Promise<Property[]> {
-    let query = db.select().from(properties);
+    let queryBuilder = db.select().from(properties);
     
     if (filters) {
       const conditions = [];
@@ -190,11 +190,11 @@ export class DatabaseStorage implements IStorage {
       }
       
       if (conditions.length > 0) {
-        query = query.where(and(...conditions));
+        queryBuilder = queryBuilder.where(and(...conditions));
       }
     }
     
-    return await query;
+    return await queryBuilder;
   }
 
   async getPropertiesByUser(userId: number): Promise<Property[]> {
