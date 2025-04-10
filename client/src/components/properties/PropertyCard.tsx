@@ -171,12 +171,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
             <span>{`${property.city}, ${property.state}`}</span>
           </div>
         </div>
-        <Link href={`/properties/${property.id}`}>
-          <a className="block">
-            <h4 className="font-poppins font-medium text-neutral-500 mb-3 hover:text-secondary transition-colors">
-              {property.title}
-            </h4>
-          </a>
+        <Link href={`/properties/${property.id}`} className="block">
+          <h4 className="font-poppins font-medium text-neutral-500 mb-3 hover:text-secondary transition-colors">
+            {property.title}
+          </h4>
         </Link>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center text-neutral-400 text-sm">
@@ -197,15 +195,15 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
         <div className="pt-3 border-t border-neutral-100 flex justify-between items-center">
           <div className="flex items-center">
             <img 
-              src={property.avatar || "https://randomuser.me/api/portraits/men/32.jpg"} 
+              src={"https://randomuser.me/api/portraits/men/32.jpg"} 
               alt="Agent" 
               className="w-8 h-8 rounded-full mr-2" 
             />
             <span className="text-sm text-neutral-500 font-medium">
-              {property.firstName || "HomeVerse"} {property.lastName || "Agent"}
+              {"HomeVerse Agent"}
             </span>
           </div>
-          <span className="text-xs text-neutral-400">{formatDate(new Date(property.createdAt))}</span>
+          <span className="text-xs text-neutral-400">{property.createdAt ? formatDate(new Date(property.createdAt)) : "Recently added"}</span>
         </div>
       </div>
     </div>
