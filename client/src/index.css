@@ -1,0 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Open+Sans:wght@400;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-opensans antialiased bg-neutral-50 text-neutral-500;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-poppins font-bold text-primary;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-6 py-2 text-white bg-primary rounded-md hover:bg-primary-dark transition-colors font-medium;
+  }
+  
+  .btn-secondary {
+    @apply px-6 py-2 text-white bg-secondary rounded-md hover:bg-secondary-dark transition-colors font-medium;
+  }
+  
+  .btn-accent {
+    @apply px-6 py-2 text-white bg-accent rounded-md hover:bg-accent-dark transition-colors font-medium;
+  }
+  
+  .btn-outline {
+    @apply px-6 py-2 border border-accent text-accent rounded-md hover:bg-accent hover:text-white transition-colors font-medium;
+  }
+  
+  .property-feature {
+    @apply flex items-center text-neutral-400 text-sm;
+  }
+}
