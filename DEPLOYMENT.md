@@ -114,14 +114,29 @@ Render automatically provisions SSL certificates for custom domains.
 1. **Database Connection Errors**: 
    - If using Render PostgreSQL, make sure you're using the "Internal Database URL"
    - If using an external database, make sure the connection string is correct and the database allows connections from Render
+   - **For "getaddrinfo ENOTFOUND" errors**: This is a DNS resolution error
+     - Check if the database hostname is correct
+     - For external providers (Neon, Supabase, etc.), verify the database is still active
+     - Try using the IP address instead of the hostname if possible
+     - Make sure your database provider isn't experiencing an outage
 
-2. **Deployment Errors**:
+2. **SSL-Related Issues**:
+   - Most cloud database providers require SSL connections
+   - Make sure your connection string includes SSL parameters if needed
+   - For some providers, you may need to use `?sslmode=require` at the end of the connection string
+
+3. **Deployment Errors**:
    - Check the application logs in the Render dashboard
    - If you see "DATABASE_URL must be set", follow the instructions in section 5
    - If tables don't exist, you may need to manually create them or implement a migration system
 
-3. **Environment Variables**:
+4. **Environment Variables**:
    - Verify all environment variables are correctly set in the Render dashboard
    - After changing environment variables, you need to redeploy the application
+   
+5. **Database-specific issues**:
+   - **Neon**: Make sure you're using the correct connection string format and that your project is active
+   - **Supabase**: Check that the database is online and the connection string has proper credentials
+   - **Render PostgreSQL**: Verify that the database service is running and use the Internal Database URL
 
 Remember to never commit sensitive data like API keys, database credentials, or session secrets to your repository.

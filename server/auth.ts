@@ -30,8 +30,13 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
+  if (!process.env.SESSION_SECRET && process.env.NODE_ENV === 'production') {
+    console.warn('⚠️ Warning: SESSION_SECRET is not set. Using a default secret is not recommended for production.');
+    console.warn('Generate a strong secret with: openssl rand -hex 32');
+  }
+  
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "homeverse-secret-key",
+    secret: process.env.SESSION_SECRET || "homeverse-development-secret-key",
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
